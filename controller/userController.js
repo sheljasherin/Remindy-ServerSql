@@ -4,8 +4,6 @@ const User = require("../models/Person"); // Sequelize User Model
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
-
-// ➤ Validation Schema
 const validateUser = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(3).max(50).required(),
@@ -18,30 +16,26 @@ const validateUser = (data) => {
     return schema.validate(data);
 };
 
-// ➤ Register User
 exports.register = async (req, res) => {
     try {
         console.log("Received Registration Data:", req.body);
-
-        // Validate Input Data
         const { error } = validateUser(req.body);
         if (error) {
             console.log("Validation Error:", error.details[0].message);
             return res.status(400).json({ message: error.details[0].message });
         }
 
-        // Check if User Already Exists
         const existingUser = await User.findOne({ where: { email: req.body.email } });
         if (existingUser) {
             console.log("User already exists:", req.body.email);
             return res.status(409).json({ message: "User already exists" });
         }
 
-        // Hash Password
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-        // Create New User
+    
         const newUser = await User.create({
             name: req.body.name,
             email: req.body.email,
@@ -60,7 +54,6 @@ exports.register = async (req, res) => {
     }
 };
 
-// ➤ Login User
 exports.login = async (req, res) => {
     try {
         console.log("Login Attempt:", req.body);
@@ -73,14 +66,14 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // Validate Password
+       
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
             console.log("Invalid Password Attempt:", email);
             return res.status(400).json({ message: "Invalid password" });
         }
 
-        // Check Admin Secret Key
+ 
         if (userType === "admin") {
             if (secretKey !== process.env.ADMIN_SECRET_KEY) {
                 console.log("Invalid Admin Secret Key Attempt");
@@ -88,7 +81,6 @@ exports.login = async (req, res) => {
             }
         }
 
-        // Generate JWT Token
         const token = jwt.sign({ id: user.id, userType }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
         console.log("Login Successful:", user.id);
@@ -99,7 +91,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// ➤ Get All Users (Excluding Password)
+
 exports.getAllUsers = async (req, res) => {
     try {
         const users = await User.findAll({ attributes: { exclude: ["password"] } });

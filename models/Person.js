@@ -33,7 +33,7 @@ const User = sequelize.define("User", {
         allowNull: true,
     },
 }, {
-    timestamps: true, 
+    timestamps: false, 
 });
 
 module.exports = User;

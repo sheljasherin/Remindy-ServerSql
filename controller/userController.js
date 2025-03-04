@@ -53,44 +53,39 @@ exports.register = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 exports.login = async (req, res) => {
     try {
-        console.log("Login Attempt:", req.body);
-
         const { email, password, userType, secretKey } = req.body;
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            console.log("User Not Found:", email);
             return res.status(400).json({ message: "User not found" });
         }
 
-       
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
-            console.log("Invalid Password Attempt:", email);
             return res.status(400).json({ message: "Invalid password" });
         }
 
- 
         if (userType === "admin") {
             if (secretKey !== process.env.ADMIN_SECRET_KEY) {
-                console.log("Invalid Admin Secret Key Attempt");
                 return res.status(403).json({ message: "Invalid Admin Secret Key" });
             }
         }
 
         const token = jwt.sign({ id: user.id, userType }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-        console.log("Login Successful:", user.id);
-        res.json({ token, userId: user.id, userExists: true });
+        res.json({ 
+            token, 
+            userId: user.id, 
+            userExists: true, 
+            redirectTo: userType === "admin" ? "/admin-dashboard" : "/" 
+        });
+
     } catch (error) {
-        console.error("Login Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 
 exports.getAllUsers = async (req, res) => {
     try {

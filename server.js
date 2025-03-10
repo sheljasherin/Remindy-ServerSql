@@ -1,15 +1,19 @@
-require("dotenv").config();
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const sequelize = require("./config/db");
-const authRoutes = require("./routes/PersonRoute");
-
+const { connectDB } = require("./config/database");
+const adminRoutes = require("./routes/adminRoutes");
+const authRoutes=require('./routes/authRoutes')
+const bodyParser = require("body-parser");
 const app = express();
-app.use(express.json());
-app.use(cors());
-app.use("/api/auth", authRoutes);
-sequelize.sync().then(() => {
-    console.log("Database synced successfully.");
-    app.listen(5001, () => console.log("Server running on port 5001"));
-}).catch(err => console.error("Database sync error:", err));
 
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json()); 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use("/admin", adminRoutes);
+app.use("/auth",authRoutes)
+connectDB();
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
